@@ -1,4 +1,5 @@
 import re
+import sys
 
 class parser:
 
@@ -12,6 +13,7 @@ class parser:
 	flag_ident = False
 	flag_check_p = False
 	flag_lists = False
+	flag_enum = False
 
 	def __init__(self, file_name):
 		self.read_file= open(file_name, 'r')
@@ -76,7 +78,7 @@ class parser:
 
 
 	def check_p(self):
-		if not self.check_h3() and not self.check_h2() and not self.check_h1() and not self.check_lists():			
+		if not self.check_h3() and not self.check_h2() and not self.check_h1() and not self.check_lists() and not self.check_enum():			
 			if (len(self.current_line.strip()) > 0):
 				var = self.current_line.strip()
 				if (self.flag_check_p == False):
@@ -106,15 +108,22 @@ class parser:
 				self.list_block.append("<ul>")
 			self.list_block.append(re.sub(r"(^([+*-]))", r"<li>", self.current_line).strip() + "</li>")
 			return True
-		elif re.match("^(\d\.)", self.current_line):
-			if self.flag_lists == False:
-				self.flag_lists = True
-				self.list_block.append("<ul>")
-			self.list_block.append(re.sub(r"(^(\d\.))", r"<li>", self.current_line).strip() + "</li>")
-			return True
 		elif self.flag_lists:
 			self.flag_lists = False
 			self.list_block.append("</ul>")
+			return True
+		return False
+
+	def check_enum(self):
+		if re.match("^(\d\.)", self.current_line):
+			if self.flag_enum == False:
+				self.flag_enum = True
+				self.list_block.append("<ol>")
+			self.list_block.append(re.sub(r"(^(\d\.))", r"<li>", self.current_line).strip() + "</li>")
+			return True
+		elif self.flag_enum:
+			self.flag_enum = False
+			self.list_block.append("</ol>")
 			return True
 		return False
 
@@ -128,11 +137,14 @@ class parser:
 
 		if self.flag_lists:
 			self.list_block.append("</ul>")
+
+		if self.flag_enum:
+			self.list_block.append("</ol>")
 	
 		for x in self.list_block:
 			print(x)
 
 if __name__ == "__main__":
-	name = "markdown-text.md"
+	name = sys.argv[1]
 	parser(name)
 
